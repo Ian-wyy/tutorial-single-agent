@@ -15,7 +15,7 @@ struct State {
 class gridmap {
 public:
   // init an empty map
-  gridmap(int height, int width);
+  gridmap(vid height, vid width);
   // init map based on an input file
   gridmap(const string &filename);
 

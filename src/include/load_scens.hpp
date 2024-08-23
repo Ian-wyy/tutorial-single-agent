@@ -12,7 +12,11 @@
 #include <iostream>
 #include <vector>
 
+#include "gridmap.hpp"
+
 namespace movingai {
+
+
 
 bool traversable(char c);
 
@@ -100,12 +104,15 @@ public:
 
   inline void set_precision(int prec) { precision_ = prec; }
 
+  void get_distance(gridmap& gp); //using the bool vector in gridmap and give the distance to distance_
+
 private:
   unsigned int startx_, starty_, goalx_, goaly_;
   unsigned int mapwidth_, mapheight_;
   double distance_;
   std::string map_;
   unsigned int precision_;
+
 
   // no copy
   experiment(const experiment &other) {}
