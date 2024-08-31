@@ -16,8 +16,6 @@
 
 namespace movingai {
 
-
-
 bool traversable(char c);
 
 class gm_header {

@@ -4,9 +4,8 @@
 #include <string>
 #include <unordered_map>
 
-#define edge  1
-#define angle  1.414
-
+using namespace std;
+using namespace movingai;
 
 bool movingai::traversable(char c)
 {
@@ -224,31 +223,5 @@ void movingai::scenario_manager::load_v1_scenario(std::ifstream &infile)
 }
 
 
-struct P
-{
-	int x, y;
-	double G, H, F;
-	P *parent;
-
-	P(int _x, int _y) : x(_x), y(_y), F(0), G(0), H(0), parent(NULL)
-	{
-	}
-};
 
 
-double calcG(P* p)
-{
-	double G;
-	if (p->parent)
-	{
-		G = (abs(p->x - p->parent->x) + abs(p->y - p->parent->y) ) == 1 ? edge : angle;
-	}
-	else
-	G = 0;
-
-	return G;
-}
-
-void movingai::experiment::get_distance(gridmap &gp)
-{
-}

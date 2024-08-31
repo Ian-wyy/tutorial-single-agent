@@ -32,7 +32,7 @@ public:
     db[c.y * height_ + c.x] = label;
   }
 
-  inline bool get_label(State c) { return db[c.y * height_ + c.x]; }
+  inline bool get_label(State c) { return db[c.y * width_ + c.x]; }
 
   vid height_, width_;
   string filename;

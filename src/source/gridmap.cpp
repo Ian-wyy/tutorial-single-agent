@@ -37,27 +37,27 @@ vector<State> gridmap::get_neighbours(State c)
     res.push_back({c.x - 1, c.y});
   }
 
-  if (c.x - 1 > 0 && c.y + 1 < width_)
+  if (c.x - 1 > 0 && c.y + 1 < height_)
   {
     res.push_back({c.x - 1, c.y + 1});
   }
 
-  if (c.y + 1 < width_)
+  if (c.y + 1 < height_)
   {
     res.push_back({c.x, c.y + 1});
   }
 
-  if (c.y + 1 < width_ && c.x + 1 < height_)
+  if (c.y + 1 < height_ && c.x + 1 < width_)
   {
     res.push_back({c.x + 1, c.y + 1});
   }
 
-  if (c.x + 1 < height_)
+  if (c.x + 1 < width_)
   {
     res.push_back({c.x + 1, c.y});
   }
 
-  if (c.x + 1 < height_ && c.y - 1 > 0)
+  if (c.x + 1 < width_ && c.y - 1 > 0)
   {
     res.push_back({c.x + 1, c.y - 1});
   }
