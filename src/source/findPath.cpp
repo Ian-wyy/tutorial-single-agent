@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include <math.h>
+#include <string.h>
 
 #define edge 1
 #define angle 1.414
@@ -34,9 +35,9 @@ double findPath::calcG(Point *temp_start, Point *point)
     return extraG + parentG;
 }
 
-double findPath::calcH(Point *point, Point *end)
+double findPath::calcH(Point *point)
 {
-    return sqrt((double)(end->x - point->x) * (double)(end->x - point->x) + (double)(end->y - point->y) * (double)(end->y - point->y));
+    return sqrt((double)(end_point.x - point->x) * (double)(end_point.x - point->x) + (double)(end_point.y - point->y) * (double)(end_point.y - point->y));
 }
 
 double findPath::calcF(Point *point)
@@ -44,75 +45,56 @@ double findPath::calcF(Point *point)
     return point->G + point->H;
 }
 
-Point *findPath::getLeastFpoint()
-{
-    if (!openList.empty())
-    {
-        auto resPoint = openList.front();
-        for (auto &point : openList)
-        {
-            if (point->F < resPoint->F)
-                resPoint = point;
-        }
 
-        return resPoint;
-    }
-    return NULL;
+Point *createNewPoint(int x, int y)
+{
+    Point *p = new Point;
+    memset(p, 0, sizeof(Point));
+    p->x = x;
+    p->y = y;
+    return p;
 }
 
-Point *findPath::__getPath(Point &start_point, Point &endPoint)
+Point *findPath::__getPath()
 {
-    openList.push_back(new Point(start_point.x, start_point.y));
-    while (!openList.empty())
+    Point *root = createNewPoint(start_point.x, start_point.y);
+    openList.push_back(root);
+
+    Point *current = root;
+    Point *child = NULL;
+
+    vector<Point *>::iterator it;    // 变化
+    vector<Point *>::iterator itMin; // 记录最小的
+
+    while (1)
     {
-        auto curPoint = getLeastFpoint();
-        openList.remove(curPoint);
-        closeList.push_back(curPoint);
+        getsurroundingPoints(current);
 
-        auto surroundingPoint = getsurroundingPoints(curPoint);
+        it = openList.begin();
+        itMin = openList.begin();
 
-        for (auto &target : surroundingPoint)
+        for (; it != openList.end(); it++)
         {
-            if (!isInlist(openList, target))
-            {
-                target->parent = curPoint;
-
-                target->G = calcG(curPoint, target);
-                target->H = calcH(target, &endPoint);
-                target->F = calcF(target);
-
-                openList.push_back(target);
-            }
-            else
-            {
-                int tempG = calcG(curPoint, target);
-                if (tempG < target->G)
-                {
-                    target->parent = curPoint;
-
-                    target->G = tempG;
-                    target->F = calcF(target);
-                }
-            }
-            Point *resPoint = isInlist(openList, &endPoint);
-            if (resPoint)
-                return resPoint;
+            itMin = ((*itMin)->F < (*it)->F) ? itMin : it;
         }
-    }
 
-    return NULL;
+        current = *itMin;
+        openList.erase(itMin);
+
+        if(end_point.x == current->x && end_point.y == current->y){
+            return current;
+        }
+        if(openList.size() == 0){
+            return NULL;
+        }
+        
+    }
 }
 
-list<Point *> findPath::getPath(Point &startPoint, Point &endPoint)
+vector<Point *> findPath::getPath()
 {
-    Point *result = __getPath(startPoint, endPoint);
-    list<Point *> path;
-
-    while (result)
-    {
-        path.push_front(result);
-        result = result->parent;
-    }
+    Point *result = __getPath();
+    vector<Point *> path;
 
     openList.clear();
     closeList.clear();
@@ -120,7 +102,7 @@ list<Point *> findPath::getPath(Point &startPoint, Point &endPoint)
     return path;
 }
 
-Point *findPath::isInlist(const list<Point *> &list, const Point *point) const
+Point *findPath::isInlist(const vector<Point *> &list, const Point *point) const
 {
     for (auto p : list)
     {
@@ -130,20 +112,20 @@ Point *findPath::isInlist(const list<Point *> &list, const Point *point) const
     return NULL;
 }
 
-bool findPath::isCanreach(const Point *point, const Point *target) const
+bool findPath::isCanreach(const Point point, const Point target) const
 {
-    if (target->x < 0 || target->x > width_ - 1 || target->y < 0 || target->y > height_ - 1 || _map[target->x][target->y] == 1 || (target->x == point->x && target->y == point->y) || isInlist(closeList, target))
+    if (target.x < 0 || target.x > width_ - 1 || target.y < 0 || target.y > height_ - 1 || _map[target.x][target.y] == 1 || (target.x == point.x && target.y == point.y))
         return false;
     else
     {
-        if (_map[point->x][target->y] == 0 && _map[target->x][point->y] == 0)
+        if (_map[point.x][target.y] == 0 && _map[target.x][point.y] == 0)
             return true;
         else
             return false;
     }
 }
 
-vector<Point *> findPath::getsurroundingPoints(const Point *point) const
+void findPath::getsurroundingPoints(Point *point)
 {
     vector<Point *> surroundPoint;
 
@@ -151,14 +133,28 @@ vector<Point *> findPath::getsurroundingPoints(const Point *point) const
     {
         for (int y = point->y - 1; x <= point->y + 1; y++)
         {
-            if (isCanreach(point, new Point(x, y)))
-                surroundPoint.push_back(new Point(x, y));
+            Point p;
+            p.x = x;
+            p.y = y;
+            if (isCanreach(*point, p))
+            {
+                Point *new_point = createNewPoint(x, y);
+                
+                new_point->parent = point;
+                new_point->G=calcG(point, new_point);
+                new_point->H = calcH(new_point);
+                new_point->F = calcF(new_point);
+                point->child.push_back(new_point);
+
+                openList.push_back(new_point);
+            }
         }
     }
 
-    return surroundPoint;
+    return;
 }
 
-double findPath::calcDistance(list<Point*> path){
+double findPath::calcDistance(vector<Point *> path)
+{
     return path.back()->G;
 }
