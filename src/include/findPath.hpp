@@ -3,47 +3,40 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <stdlib.h>
+#include <stdio.h>
 #include "gridmap.hpp"
 #include "load_scens.hpp"
 
 using namespace movingai;
 using namespace std;
 
-struct Point
+class findPath
 {
-    int x, y;
-    double G, H, F;
-    Point *parent;
-    vector<Point*> child;
 
-    
-};
-
-class findPath : public gridmap
-{
 public:
-    findPath(vid height, vid width) : gridmap(height, width) { getMap(); };
-    findPath(const string &filename) : gridmap(filename) { getMap(); };
+    findPath(const string &filename1, const string &filename2) : grid(filename1)
+    {
+        scen.load_scenario(filename2);
+        map = (int **)malloc(sizeof(int *) * grid.height_);
+        for (int i = 0; i < grid.height_; i++)
+        {
+            map[i] = (int *)malloc(sizeof(int) * grid.width_);
+        }
+        getMap();
+    }
+    ~findPath()
+    {
+        for (int i = 0; i < grid.height_; i++)
+        {
+            free(map[i]);
+        }
+        free(map);
+    }
     void getMap();
-    vector<Point *> getPath();
-    double calcDistance(vector<Point*> path);
+    double getPath(Point start, Point end);
 
-    vector<vector<int>> _map;
-    vector<Point *> openList;
-    vector<Point *> closeList;
-
-    Point start_point;
-    Point end_point;
-
-private:
-    Point *__getPath();
-    void getsurroundingPoints(Point *point) ;
-    bool isCanreach(const Point point, const Point target) const;
-    Point *isInlist(const vector<Point *> &list, const Point *point) const;
-    Point *getLeastFpoint();
-
-    double calcG(Point *temp_start, Point *point);
-    double calcH(Point *point);
-    double calcF(Point *point);
-
+    gridmap grid;
+    scenario_manager scen;
+    int **map;
 };

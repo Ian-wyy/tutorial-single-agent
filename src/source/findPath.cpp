@@ -10,151 +10,174 @@
 #include <math.h>
 #include <string.h>
 
-#define edge 1
-#define angle 1.414
-
 using namespace std;
 using namespace movingai;
 
+#define LINE 1
+#define SLIDE 1.414
+
 void findPath::getMap()
 {
-    for (int i = 0; i < height_; i++)
-    {
-        _map.push_back(vector<int>());
-        for (int j = 0; j < width_; j++)
+    for (int i = 0; i < grid.height_; i++)
+    {   
+        for (int j = 0; j < grid.width_; j++)
         {
-            _map[i].push_back(db[i * width_ + j]);
+            map[i][j] = grid.is_obstacle({j,i});
         }
     }
 }
 
-double findPath::calcG(Point *temp_start, Point *point)
+enum dirent
 {
-    int extraG = (abs(point->x - temp_start->x) + abs(point->y - temp_start->y)) == 1 ? edge : angle;
-    int parentG = point->parent == NULL ? 0 : point->parent->G;
-    return extraG + parentG;
+    p_up,
+    p_down,
+    p_left,
+    p_right,
+    p_lup,
+    p_ldown,
+    p_rup,
+    p_rdown
+};
+
+typedef struct Node
+{
+    Point pos;
+    vector<Node *> child;
+    Node *parent;
+} Node;
+
+Node *createTreeNode(int x, int y)
+{
+    Node *pNew = new Node;
+    memset(pNew, 0, sizeof(Node));
+    pNew->pos.x = x;
+    pNew->pos.y = y;
+    return pNew;
 }
 
-double findPath::calcH(Point *point)
+void freeNode(Node *root)
 {
-    return sqrt((double)(end_point.x - point->x) * (double)(end_point.x - point->x) + (double)(end_point.y - point->y) * (double)(end_point.y - point->y));
+    vector<Node *>::iterator it = root->child.begin();
+    for (; it < root->child.end(); it++)
+    {
+        freeNode(*it);
+    }
+    delete (root);
 }
 
-double findPath::calcF(Point *point)
+double getH(Point current, Point end)
 {
-    return point->G + point->H;
+    return abs((current.x - end.x) * (current.x - end.x)) + abs((current.y - end.y) * (current.y - end.y));
 }
 
-
-Point *createNewPoint(int x, int y)
+double findPath::getPath(Point start, Point end)
 {
-    Point *p = new Point;
-    memset(p, 0, sizeof(Point));
-    p->x = x;
-    p->y = y;
-    return p;
-}
+    bool pathMap[grid.height_][grid.width_] = {0};
 
-Point *findPath::__getPath()
-{
-    Point *root = createNewPoint(start_point.x, start_point.y);
-    openList.push_back(root);
+    vector<Node *> buff;
+    vector<Node *>::iterator it;    // 变化
+    vector<Node *>::iterator itMin; // 记录最小的
 
-    Point *current = root;
-    Point *child = NULL;
+    Node *root = createTreeNode(start.x, start.y);
+    pathMap[start.x][start.y] = true;
 
-    vector<Point *>::iterator it;    // 变化
-    vector<Point *>::iterator itMin; // 记录最小的
+    Node *current = root;
+    Node *child = NULL;
+
+    bool isFindEnd = true;
 
     while (1)
     {
-        getsurroundingPoints(current);
-
-        it = openList.begin();
-        itMin = openList.begin();
-
-        for (; it != openList.end(); it++)
+        for (int i = 0; i < 8; i++)
         {
-            itMin = ((*itMin)->F < (*it)->F) ? itMin : it;
+            child = createTreeNode(current->pos.x, current->pos.y);
+            switch (i)
+            {
+            case p_up:
+                child->pos.y--;
+                child->pos.G = current->pos.G + LINE;
+                break;
+            case p_down:
+                child->pos.y++;
+                child->pos.G = current->pos.G + LINE;
+                break;
+            case p_left:
+                child->pos.x--;
+                child->pos.G = current->pos.G + LINE;
+                break;
+            case p_right:
+                child->pos.x++;
+                child->pos.G = current->pos.G + LINE;
+                break;
+            case p_lup:
+                child->pos.x--;
+                child->pos.y--;
+                child->pos.G = current->pos.G + SLIDE;
+                break;
+            case p_ldown:
+                child->pos.y++;
+                child->pos.x--;
+                child->pos.G = current->pos.G + SLIDE;
+                break;
+            case p_rdown:
+                child->pos.x++;
+                child->pos.y++;
+                child->pos.G = current->pos.G + SLIDE;
+                break;
+            case p_rup:
+                child->pos.x++;
+                child->pos.y--;
+                child->pos.G = current->pos.G + SLIDE;
+                break;
+            }
+
+            if (child->pos.x > 0 && child->pos.y > 0 && child->pos.x < grid.width_ && child->pos.y < grid.height_ && pathMap[child->pos.y][child->pos.x] == 0 && map[child->pos.y][child->pos.x] == 0 && map[child->pos.y][current->pos.x] == 0 && map[child->pos.x][current->pos.y] == 0)
+            {
+                child->pos.H = getH(child->pos, end);
+                child->pos.F = child->pos.H + child->pos.G;
+                current->child.push_back(child);
+                child->parent = current;
+
+                buff.push_back(child);
+            }
+            else
+            {
+                delete child;
+            }
+        }
+
+        it = buff.begin();
+        itMin = buff.begin();
+
+        for (; it != buff.end(); it++)
+        {
+            itMin = ((*itMin)->pos.F < (*it)->pos.F) ? itMin : it;
         }
 
         current = *itMin;
-        openList.erase(itMin);
+        pathMap[current->pos.y][current->pos.x] = true;
+        buff.erase(itMin);
 
-        if(end_point.x == current->x && end_point.y == current->y){
-            return current;
+        if (end.x == current->pos.x && end.y == current->pos.y)
+        {
+            break;
         }
-        if(openList.size() == 0){
-            return NULL;
+        if (buff.size() == 0)
+        {
+            isFindEnd = false;
+            break;
         }
-        
     }
-}
 
-vector<Point *> findPath::getPath()
-{
-    Point *result = __getPath();
-    vector<Point *> path;
-
-    openList.clear();
-    closeList.clear();
-
-    return path;
-}
-
-Point *findPath::isInlist(const vector<Point *> &list, const Point *point) const
-{
-    for (auto p : list)
+    if (isFindEnd)
     {
-        if (p->x == point->x && p->y == point->y)
-            return p;
+        double length = current->pos.G;
+        freeNode(root);
+        return length;
     }
-    return NULL;
-}
-
-bool findPath::isCanreach(const Point point, const Point target) const
-{
-    if (target.x < 0 || target.x > width_ - 1 || target.y < 0 || target.y > height_ - 1 || _map[target.x][target.y] == 1 || (target.x == point.x && target.y == point.y))
-        return false;
     else
     {
-        if (_map[point.x][target.y] == 0 && _map[target.x][point.y] == 0)
-            return true;
-        else
-            return false;
+        freeNode(root);
+        return -1;
     }
-}
-
-void findPath::getsurroundingPoints(Point *point)
-{
-    vector<Point *> surroundPoint;
-
-    for (int x = point->x - 1; x <= point->x + 1; x++)
-    {
-        for (int y = point->y - 1; x <= point->y + 1; y++)
-        {
-            Point p;
-            p.x = x;
-            p.y = y;
-            if (isCanreach(*point, p))
-            {
-                Point *new_point = createNewPoint(x, y);
-                
-                new_point->parent = point;
-                new_point->G=calcG(point, new_point);
-                new_point->H = calcH(new_point);
-                new_point->F = calcF(new_point);
-                point->child.push_back(new_point);
-
-                openList.push_back(new_point);
-            }
-        }
-    }
-
-    return;
-}
-
-double findPath::calcDistance(vector<Point *> path)
-{
-    return path.back()->G;
 }

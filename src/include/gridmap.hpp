@@ -12,6 +12,13 @@ struct State {
   vid x, y;
 };
 
+
+typedef struct Point
+{
+    int x, y;
+    double F, G, H;
+} Point;
+
 class gridmap {
 public:
   // init an empty map
