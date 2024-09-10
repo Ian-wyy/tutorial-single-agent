@@ -19,10 +19,11 @@ using namespace movingai;
 void findPath::getMap()
 {
     for (int i = 0; i < grid.height_; i++)
-    {   
+    {
+        map.push_back(vector<int>());
         for (int j = 0; j < grid.width_; j++)
         {
-            map[i][j] = grid.is_obstacle({j,i});
+            map[i].push_back((int)grid.is_obstacle({j, i}));
         }
     }
 }
@@ -42,11 +43,19 @@ enum dirent
 typedef struct Node
 {
     Point pos;
-    vector<Node *> child;
+    //vector<Node > child;
     Node *parent;
+    Node(int x, int y){
+        pos.x = x;
+        pos.y = y;
+        pos.F = 0;
+        pos.G = 0;
+        pos.H = 0;
+        parent = NULL;
+    }
 } Node;
 
-Node *createTreeNode(int x, int y)
+/* Node *createTreeNode(int x, int y)
 {
     Node *pNew = new Node;
     memset(pNew, 0, sizeof(Node));
@@ -63,7 +72,7 @@ void freeNode(Node *root)
         freeNode(*it);
     }
     delete (root);
-}
+} */
 
 double getH(Point current, Point end)
 {
@@ -74,15 +83,15 @@ double findPath::getPath(Point start, Point end)
 {
     bool pathMap[grid.height_][grid.width_] = {0};
 
-    vector<Node *> buff;
-    vector<Node *>::iterator it;    // 变化
-    vector<Node *>::iterator itMin; // 记录最小的
+    vector<Node> buff;
+    vector<Node>::iterator it;    // 变化
+    vector<Node>::iterator itMin; // 记录最小的
 
-    Node *root = createTreeNode(start.x, start.y);
+    //Node *root = createTreeNode(start.x, start.y);
+    Node root = Node(start.x, start.y);
     pathMap[start.x][start.y] = true;
 
-    Node *current = root;
-    Node *child = NULL;
+    Node current = root;
 
     bool isFindEnd = true;
 
@@ -90,59 +99,59 @@ double findPath::getPath(Point start, Point end)
     {
         for (int i = 0; i < 8; i++)
         {
-            child = createTreeNode(current->pos.x, current->pos.y);
+            Node child = Node(current.pos.x, current.pos.y);
             switch (i)
             {
             case p_up:
-                child->pos.y--;
-                child->pos.G = current->pos.G + LINE;
+                child.pos.y--;
+                child.pos.G = current.pos.G + LINE;
                 break;
             case p_down:
-                child->pos.y++;
-                child->pos.G = current->pos.G + LINE;
+                child.pos.y++;
+                child.pos.G = current.pos.G + LINE;
                 break;
             case p_left:
-                child->pos.x--;
-                child->pos.G = current->pos.G + LINE;
+                child.pos.x--;
+                child.pos.G = current.pos.G + LINE;
                 break;
             case p_right:
-                child->pos.x++;
-                child->pos.G = current->pos.G + LINE;
+                child.pos.x++;
+                child.pos.G = current.pos.G + LINE;
                 break;
             case p_lup:
-                child->pos.x--;
-                child->pos.y--;
-                child->pos.G = current->pos.G + SLIDE;
+                child.pos.x--;
+                child.pos.y--;
+                child.pos.G = current.pos.G + SLIDE;
                 break;
             case p_ldown:
-                child->pos.y++;
-                child->pos.x--;
-                child->pos.G = current->pos.G + SLIDE;
+                child.pos.y++;
+                child.pos.x--;
+                child.pos.G = current.pos.G + SLIDE;
                 break;
             case p_rdown:
-                child->pos.x++;
-                child->pos.y++;
-                child->pos.G = current->pos.G + SLIDE;
+                child.pos.x++;
+                child.pos.y++;
+                child.pos.G = current.pos.G + SLIDE;
                 break;
             case p_rup:
-                child->pos.x++;
-                child->pos.y--;
-                child->pos.G = current->pos.G + SLIDE;
+                child.pos.x++;
+                child.pos.y--;
+                child.pos.G = current.pos.G + SLIDE;
                 break;
             }
 
-            if (child->pos.x > 0 && child->pos.y > 0 && child->pos.x < grid.width_ && child->pos.y < grid.height_ && pathMap[child->pos.y][child->pos.x] == 0 && map[child->pos.y][child->pos.x] == 0 && map[child->pos.y][current->pos.x] == 0 && map[child->pos.x][current->pos.y] == 0)
+            if (child.pos.x > 0 && child.pos.y > 0 && child.pos.x < grid.width_ && child.pos.y < grid.height_ && pathMap[child.pos.y][child.pos.x] == 0 && map[child.pos.y][child.pos.x] == 0 && map[child.pos.y][current.pos.x] == 0 && map[child.pos.x][current.pos.y] == 0)
             {
-                child->pos.H = getH(child->pos, end);
-                child->pos.F = child->pos.H + child->pos.G;
-                current->child.push_back(child);
-                child->parent = current;
+                child.pos.H = getH(child.pos, end);
+                child.pos.F = child.pos.H + child.pos.G;
+                //current.child.push_back(&child);
+                child.parent = &current;
 
                 buff.push_back(child);
             }
             else
             {
-                delete child;
+                //delete child;
             }
         }
 
@@ -151,14 +160,14 @@ double findPath::getPath(Point start, Point end)
 
         for (; it != buff.end(); it++)
         {
-            itMin = ((*itMin)->pos.F < (*it)->pos.F) ? itMin : it;
+            itMin = ((*itMin).pos.F < (*it).pos.F) ? itMin : it;
         }
 
         current = *itMin;
-        pathMap[current->pos.y][current->pos.x] = true;
+        pathMap[current.pos.y][current.pos.x] = true;
         buff.erase(itMin);
 
-        if (end.x == current->pos.x && end.y == current->pos.y)
+        if (end.x == current.pos.x && end.y == current.pos.y)
         {
             break;
         }
@@ -171,13 +180,13 @@ double findPath::getPath(Point start, Point end)
 
     if (isFindEnd)
     {
-        double length = current->pos.G;
-        freeNode(root);
+        double length = current.pos.G;
+        //freeNode(root);
         return length;
     }
     else
     {
-        freeNode(root);
+        //freeNode(root);
         return -1;
     }
 }

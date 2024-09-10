@@ -18,25 +18,26 @@ public:
     findPath(const string &filename1, const string &filename2) : grid(filename1)
     {
         scen.load_scenario(filename2);
-        map = (int **)malloc(sizeof(int *) * grid.height_);
+        /* map = (int **)malloc(sizeof(int *) * grid.height_);
         for (int i = 0; i < grid.height_; i++)
         {
             map[i] = (int *)malloc(sizeof(int) * grid.width_);
-        }
+        } */
         getMap();
     }
-    ~findPath()
+    /* ~findPath()
     {
         for (int i = 0; i < grid.height_; i++)
         {
             free(map[i]);
         }
         free(map);
-    }
+    } */
     void getMap();
     double getPath(Point start, Point end);
 
     gridmap grid;
     scenario_manager scen;
-    int **map;
+    //int **map;
+    vector<vector<int>> map;
 };
