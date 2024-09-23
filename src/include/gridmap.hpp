@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 namespace movingai {
 
@@ -13,11 +14,18 @@ struct State {
 };
 
 
-typedef struct Point
+typedef struct Point //The point we do in the findPath
 {
     int x, y;
     double F, G, H;
 } Point;
+
+typedef struct PPT{
+  int x;
+  int y;
+  int time;
+  PPT(int x, int y, int time): x(x), y(y), time(time){}
+} PPT; //The pair to see whether the point has agent in this time
 
 class gridmap {
 public:
@@ -36,7 +44,7 @@ public:
 
   // set the label associated with the coordinate (x, y)
   inline void set_label(State c, bool label) {
-    db[c.y * height_ + c.x] = label;
+    db[c.y * width_ + c.x] = label;
   }
 
   inline bool get_label(State c) { return db[c.y * width_ + c.x]; }
