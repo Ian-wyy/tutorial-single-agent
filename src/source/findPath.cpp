@@ -1,14 +1,10 @@
 #include "findPath.hpp"
 #include "gridmap.hpp"
-#include "load_scens.hpp"
 
 #include <cstdlib>
 #include <iostream>
-#include <list>
 #include <math.h>
 #include <string.h>
-#include <string>
-#include <unordered_map>
 #include <vector>
 
 using namespace std;

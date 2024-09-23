@@ -2,8 +2,6 @@
 
 #include "gridmap.hpp"
 #include "load_scens.hpp"
-#include <list>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string>
 #include <vector>
