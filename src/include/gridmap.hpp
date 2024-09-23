@@ -33,6 +33,7 @@ typedef struct Node {
   Point pos;
   vector<Node *> child;
   Node *parent;
+  int time;
 } Node;
 
 class gridmap {

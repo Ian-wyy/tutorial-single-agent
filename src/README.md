@@ -1,5 +1,18 @@
-1. `make gen`: this will generate `compile_commands.json` in `build`, your editor may need this for auto completiton;
-2. Compile:
-  - `make dev`: compile programs in `Debug` mode, the executables will running slower but more friendly to external debugger (e.g., `gdb`, `lldb`);
-  - `make fast`: compile programs in `Release` mode, the executables will running faster;
-3. `make clean`: remove all existing building files, useful when you want to switch between `make dev` and `make fast`
+#### Step 1: getting start with classic single agent planner
+
+0. Implement `get_neighbours` in `src/source/gridmap.cpp`;
+
+1. Implement `Dijkstra`;
+
+2. Implement `A*`;
+
+#### Step 2: running benchmark
+
+- [MovingAI - Dao](https://movingai.com/benchmarks/dao/index.html)
+- [MovingAI - others](https://movingai.com/benchmarks/grids.html)
+
+#### Step 3: implementing space-time `A*` to solve single-agent with dynamic obstacles
+
+#### Step 4: using space-time `A*` to solve multi-agent pathfinding problem by `Prioritized Planning`
+
+  - [Benchmark](https://movingai.com/benchmarks/mapf/index.html)

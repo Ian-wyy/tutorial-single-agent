@@ -12,6 +12,10 @@ using namespace movingai;
 
 #define LINE 1
 #define SLIDE 1.414
+#define TIME_LINE 1
+#define TIME_SLIDE 1.414
+
+#define DEBUG 0
 
 void findPath::getMap() {
   for (int i = 0; i < grid.height_; i++) {
@@ -22,11 +26,12 @@ void findPath::getMap() {
   }
 }
 
-Node *createTreeNode(int x, int y) {
+Node *createTreeNode(int x, int y, int time = 0) {
   Node *pNew = new Node;
   memset(pNew, 0, sizeof(Node));
   pNew->pos.x = x;
   pNew->pos.y = y;
+  pNew->time = time;
   return pNew;
 }
 
@@ -55,11 +60,17 @@ bool isInList(vector<Node *> &buff, Node *child) {
   return false;
 }
 
-void findPath::inputTimeStep(Node *&current, Node *&root) {}
+void findPath::inputTimeStep(Node *current, Node *root) {
+  while (current != root) {
+    PPT p(current->pos.x, current->pos.y, current->time);
+    pt.push_back(p);
+    current = current->parent;
+  }
+}
 
-bool findPath::isInPt(Point pos) {
+bool findPath::isInPt(Node* child) {
   for (auto p : pt) {
-    if (p.x == pos.x && p.y == pos.y && p.time == time) {
+    if (p.x == child->pos.x && p.y == child->pos.y && p.time == child->time) {
       return true;
     }
   }
@@ -89,55 +100,68 @@ double findPath::getPath(Point start, Point end) {
   pathMap[start.y][start.x] = true;
 
   Node *current = root;
-  // cout<<"DEBUG: Start "<<"x: "<<current->pos.x<<", y:
-  // "<<current->pos.y<<endl; cout<<"DEBUG: End "<<"x: "<<end.x<<", y:
-  // "<<end.y<<endl;
+  if (DEBUG) {
+    cout << "DEBUG: Start "
+         << "x: " << current->pos.x << ", y: " << current->pos.y << endl;
+    cout << " DEBUG : End "
+         << " x : " << end.x << ",y : " << end.y << endl;
+  }
   bool isFindEnd = true;
 
-  time = 0; // each time finding a new object, time get 0 again
+  //time = 0; // each time finding a new object, time get 0 again
 
   while (1) {
     // time++; // every search step, time ++
-    cout << "DEBUG: "
-         << "x: " << current->pos.x << ", y: " << current->pos.y << endl;
+    if (DEBUG) {
+      cout << "DEBUG: "
+           << "x: " << current->pos.x << ", y: " << current->pos.y << endl;
+    }
 
     for (int i = 0; i < 8; i++) {
       Node *child = createTreeNode(current->pos.x, current->pos.y);
       switch (i) {
       case p_up:
         child->pos.y--;
+        child->time = current->time + TIME_LINE;
         child->pos.G = current->pos.G + LINE;
         break;
       case p_down:
         child->pos.y++;
+        child->time = current->time + TIME_LINE;
         child->pos.G = current->pos.G + LINE;
         break;
       case p_left:
         child->pos.x--;
+        child->time = current->time + TIME_LINE;
         child->pos.G = current->pos.G + LINE;
         break;
       case p_right:
         child->pos.x++;
+        child->time = current->time + TIME_LINE;
         child->pos.G = current->pos.G + LINE;
         break;
       case p_lup:
         child->pos.x--;
         child->pos.y--;
+        child->time = current->time + TIME_SLIDE;
         child->pos.G = current->pos.G + SLIDE;
         break;
       case p_ldown:
         child->pos.y++;
         child->pos.x--;
+        child->time = current->time + TIME_SLIDE;
         child->pos.G = current->pos.G + SLIDE;
         break;
       case p_rdown:
         child->pos.x++;
         child->pos.y++;
+        child->time = current->time + TIME_SLIDE;
         child->pos.G = current->pos.G + SLIDE;
         break;
       case p_rup:
         child->pos.x++;
         child->pos.y--;
+        child->time = current->time + TIME_SLIDE;
         child->pos.G = current->pos.G + SLIDE;
         break;
       }
@@ -153,11 +177,10 @@ double findPath::getPath(Point start, Point end) {
         if (isInList(buff, child)) {
           delete child;
           continue;
-        } else if (isInPt(child->pos)) {
+        } else if (isInPt(child)) {
           delete child;
           continue;
-        }  
-        else {
+        } else {
           current->child.push_back(child);
           child->parent = current;
           buff.push_back(child);

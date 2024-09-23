@@ -19,7 +19,7 @@ public:
   }
   void getMap();
   double getPath(Point start, Point end);
-  bool isInPt(Point p);
+  bool isInPt(Node* child);
 
   gridmap grid;
   scenario_manager scen;
@@ -28,5 +28,5 @@ public:
   // The part for time dimension
   vector<PPT> pt;
   int time;
-  void inputTimeStep(Node* &current, Node* &root);
+  void inputTimeStep(Node* current, Node* root);
 };
