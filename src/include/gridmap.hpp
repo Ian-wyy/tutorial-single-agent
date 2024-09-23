@@ -27,6 +27,14 @@ typedef struct PPT{
   PPT(int x, int y, int time): x(x), y(y), time(time){}
 } PPT; //The pair to see whether the point has agent in this time
 
+enum dirent { p_up, p_down, p_left, p_right, p_lup, p_ldown, p_rup, p_rdown };
+
+typedef struct Node {
+  Point pos;
+  vector<Node *> child;
+  Node *parent;
+} Node;
+
 class gridmap {
 public:
   // init an empty map

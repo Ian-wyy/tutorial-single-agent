@@ -2,6 +2,7 @@
 #include "gridmap.hpp"
 #include "load_scens.hpp"
 
+#include <cstdlib>
 #include <iostream>
 #include <list>
 #include <math.h>
@@ -25,14 +26,6 @@ void findPath::getMap() {
   }
 }
 
-enum dirent { p_up, p_down, p_left, p_right, p_lup, p_ldown, p_rup, p_rdown };
-
-typedef struct Node {
-  Point pos;
-  vector<Node *> child;
-  Node *parent;
-} Node;
-
 Node *createTreeNode(int x, int y) {
   Node *pNew = new Node;
   memset(pNew, 0, sizeof(Node));
@@ -46,10 +39,6 @@ void freeNode(Node *root) {
     delete root;
     return;
   }
-  /* vector<Node *>::iterator it = root->child.begin();
-  for (; it < root->child.end(); it++) {
-    freeNode(*it);
-  } */
   for (int i = 0; i < root->child.size(); i++) {
     freeNode(root->child[i]);
   }
@@ -58,10 +47,10 @@ void freeNode(Node *root) {
 
 double getH(Point current, Point end) {
   return sqrt(abs((current.x - end.x) * (current.x - end.x)) +
-         abs((current.y - end.y) * (current.y - end.y)));
+              abs((current.y - end.y) * (current.y - end.y)));
 }
 
-bool isInList(vector<Node *>& buff, Node *child) {
+bool isInList(vector<Node *> &buff, Node *child) {
   for (auto x : buff) {
     if (x->pos.x == child->pos.x && x->pos.y == child->pos.y) {
       return true;
@@ -70,17 +59,30 @@ bool isInList(vector<Node *>& buff, Node *child) {
   return false;
 }
 
-/* bool findPath::isInPt(Point pos) {
+void findPath::inputTimeStep(Node *&current, Node *&root) {}
+
+bool findPath::isInPt(Point pos) {
   for (auto p : pt) {
     if (p.x == pos.x && p.y == pos.y && p.time == time) {
       return true;
     }
   }
   return false;
-} */
+}
 
 double findPath::getPath(Point start, Point end) {
-  bool pathMap[grid.height_][grid.width_] = {0};
+  // bool pathMap[grid.height_][grid.width_] = {0};
+
+  // As we can't use VLA, we need to malloc area for the path_map
+  int **pathMap = (int **)malloc(sizeof(int *) * grid.height_);
+  for (int i = 0; i < grid.height_; i++) {
+    pathMap[i] = (int *)malloc(sizeof(int) * grid.width_);
+  }
+  for (int i = 0; i < grid.height_; i++) {
+    for (int j = 0; j < grid.width_; j++) {
+      pathMap[i][j] = 0;
+    }
+  }
 
   vector<Node *> buff;
   vector<Node *>::iterator it;    // 变化
@@ -91,14 +93,17 @@ double findPath::getPath(Point start, Point end) {
   pathMap[start.y][start.x] = true;
 
   Node *current = root;
-  //cout<<"DEBUG: Start "<<"x: "<<current->pos.x<<", y: "<<current->pos.y<<endl;
-  //cout<<"DEBUG: End "<<"x: "<<end.x<<", y: "<<end.y<<endl;
+  // cout<<"DEBUG: Start "<<"x: "<<current->pos.x<<", y:
+  // "<<current->pos.y<<endl; cout<<"DEBUG: End "<<"x: "<<end.x<<", y:
+  // "<<end.y<<endl;
   bool isFindEnd = true;
 
-  //time = 0; // each time finding a new object, time get 0 again
+  time = 0; // each time finding a new object, time get 0 again
 
   while (1) {
-    //time++; // every search step, time ++
+    // time++; // every search step, time ++
+    cout << "DEBUG: "
+         << "x: " << current->pos.x << ", y: " << current->pos.y << endl;
 
     for (int i = 0; i < 8; i++) {
       Node *child = createTreeNode(current->pos.x, current->pos.y);
@@ -140,9 +145,9 @@ double findPath::getPath(Point start, Point end) {
         child->pos.G = current->pos.G + SLIDE;
         break;
       }
-      
-      if (child->pos.x >= 0 && child->pos.y >= 0 && child->pos.x < grid.width_ &&
-          child->pos.y < grid.height_ &&
+
+      if (child->pos.x >= 0 && child->pos.y >= 0 &&
+          child->pos.x < grid.width_ && child->pos.y < grid.height_ &&
           pathMap[child->pos.y][child->pos.x] == 0 &&
           map[child->pos.y][child->pos.x] == 0 &&
           map[child->pos.y][current->pos.x] == 0 &&
@@ -152,10 +157,10 @@ double findPath::getPath(Point start, Point end) {
         if (isInList(buff, child)) {
           delete child;
           continue;
-        } /* else if (isInPt(child->pos)) {
+        } else if (isInPt(child->pos)) {
           delete child;
           continue;
-        } */
+        }  
         else {
           current->child.push_back(child);
           child->parent = current;
@@ -166,14 +171,14 @@ double findPath::getPath(Point start, Point end) {
       }
     }
 
-    if(buff.size() == 0){ //TODO:test
+    if (buff.size() == 0) { // If the first point can't move at all, then break
       isFindEnd = false;
       break;
     }
 
     it = buff.begin();
     itMin = buff.begin();
-    
+
     for (; it != buff.end(); it++) {
       itMin = ((*itMin)->pos.F < (*it)->pos.F) ? itMin : it;
     }
@@ -181,10 +186,6 @@ double findPath::getPath(Point start, Point end) {
     current = *itMin;
     pathMap[current->pos.y][current->pos.x] = true;
     buff.erase(itMin);
-    
-    /* PPT p(current->pos.x, current->pos.y,
-          time); // The pt is used to record the time and step
-    pt.push_back(p); */
 
     if (end.x == current->pos.x && end.y == current->pos.y) {
       break;
@@ -197,10 +198,20 @@ double findPath::getPath(Point start, Point end) {
 
   if (isFindEnd) {
     double length = current->pos.G;
+    inputTimeStep(current, root); // If we find a path, then simulating the
+                                  // agent moving on the path
     freeNode(root);
+    for (int i = 0; i < grid.height_; i++) {
+      free(pathMap[i]);
+    }
+    free(pathMap);
     return length;
   } else {
     freeNode(root);
+    for (int i = 0; i < grid.height_; i++) {
+      free(pathMap[i]);
+    }
+    free(pathMap);
     return -1;
   }
 }

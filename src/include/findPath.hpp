@@ -30,4 +30,5 @@ public:
   // The part for time dimension
   vector<PPT> pt;
   int time;
+  void inputTimeStep(Node* &current, Node* &root);
 };
