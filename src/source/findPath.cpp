@@ -7,7 +7,6 @@
 #include <string.h>
 #include <vector>
 
-
 using namespace std;
 using namespace movingai;
 
@@ -206,7 +205,8 @@ double findPath::getPath(Point start, Point end) {
       }
     }
 
-    if (buff.size() == 0) { // If the first point can't move at all, then break
+    if (buff.size() == 0) { // If the point can't move at all and no point in
+                            // opnelist list now, then break
       isFindEnd = false;
       break;
     }
@@ -219,14 +219,10 @@ double findPath::getPath(Point start, Point end) {
     }
 
     current = *itMin;
-    pathMap[current->pos.y][current->pos.x] = true;
+    pathMap[current->pos.y][current->pos.x] = 1;
     buff.erase(itMin);
 
     if (end.x == current->pos.x && end.y == current->pos.y) {
-      break;
-    }
-    if (buff.size() == 0) {
-      isFindEnd = false;
       break;
     }
   }
