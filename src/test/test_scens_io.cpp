@@ -18,14 +18,27 @@ void test_scen_io(std::string filename1, std::string filename2) {
 
   findPath testA(filename1, filename2);
 
-  int flag = 0;
+  int flag = 1;
 
   for (int i = 0; i < testA.scen.num_experiments(); i++) {
     auto expr = testA.scen.get_experiment(i);
     Point start = {(int)expr->startx(), (int)expr->starty()};
     Point end = {(int)expr->goalx(), (int)expr->goaly()};
-    std::cout << testA.getPath(start, end)<<" "
-              << expr->distance() << std::endl;
+    if (abs(testA.getPath(start, end) - expr->distance()) < 1) {
+      continue;
+    } else {
+      flag = 0;
+      cout<<start.x<<", "<<start.y<<endl;
+      cout<<end.x<<", "<<end.y<<endl;
+      cout<<"testA: "<<testA.getPath(start, end)<<" answer: "<<expr->distance()<<endl;
+    }
+    /* std::cout << testA.getPath(start, end) << " " << expr->distance()
+              << std::endl; */
+  }
+  if (flag) {
+    cout << "OK" << endl;
+  } else {
+    cout << "ERROR" << endl;
   }
 }
 

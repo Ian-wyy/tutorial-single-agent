@@ -7,6 +7,7 @@
 #include <string.h>
 #include <vector>
 
+
 using namespace std;
 using namespace movingai;
 
@@ -16,6 +17,7 @@ using namespace movingai;
 #define TIME_SLIDE 1.414
 
 #define DEBUG 0
+#define TIME_STEP 0
 
 void findPath::getMap() {
   for (int i = 0; i < grid.height_; i++) {
@@ -43,7 +45,7 @@ void freeNode(Node *root) {
   for (int i = 0; i < root->child.size(); i++) {
     freeNode(root->child[i]);
   }
-  delete (root);
+  delete root;
 }
 
 double getH(Point current, Point end) {
@@ -52,8 +54,22 @@ double getH(Point current, Point end) {
 }
 
 bool isInList(vector<Node *> &buff, Node *child) {
-  for (auto x : buff) {
-    if (x->pos.x == child->pos.x && x->pos.y == child->pos.y) {
+  for (vector<Node *>::iterator it = buff.begin(); it < buff.end(); it++) {
+    if ((*it)->pos.x == child->pos.x && (*it)->pos.y == child->pos.y) {
+      if (child->pos.F < (*it)->pos.F) {
+        Node *useless = *it;
+        Node *p = useless->parent;
+        buff.erase(it);
+
+        for (vector<Node *>::iterator itt = p->child.begin();
+             itt < p->child.end(); itt++) {
+          if (*itt == useless) {
+            p->child.erase(itt);
+          }
+        }
+        delete useless;
+        return false;
+      }
       return true;
     }
   }
@@ -68,7 +84,7 @@ void findPath::inputTimeStep(Node *current, Node *root) {
   }
 }
 
-bool findPath::isInPt(Node* child) {
+bool findPath::isInPt(Node *child) {
   for (auto p : pt) {
     if (p.x == child->pos.x && p.y == child->pos.y && p.time == child->time) {
       return true;
@@ -108,7 +124,7 @@ double findPath::getPath(Point start, Point end) {
   }
   bool isFindEnd = true;
 
-  //time = 0; // each time finding a new object, time get 0 again
+  // time = 0; // each time finding a new object, time get 0 again
 
   while (1) {
     // time++; // every search step, time ++
@@ -174,10 +190,10 @@ double findPath::getPath(Point start, Point end) {
           map[current->pos.y][child->pos.x] == 0) {
         child->pos.H = getH(child->pos, end);
         child->pos.F = child->pos.H + child->pos.G;
-        if (isInList(buff, child)) {
+        if (isInPt(child)) {
           delete child;
           continue;
-        } else if (isInPt(child)) {
+        } else if (isInList(buff, child)) {
           delete child;
           continue;
         } else {
@@ -217,8 +233,10 @@ double findPath::getPath(Point start, Point end) {
 
   if (isFindEnd) {
     double length = current->pos.G;
-    inputTimeStep(current, root); // If we find a path, then simulating the
-                                  // agent moving on the path
+    if (TIME_STEP) {
+      inputTimeStep(current, root);
+    } // If we find a path, then simulating the
+      // agent moving on the path
     freeNode(root);
     for (int i = 0; i < grid.height_; i++) {
       free(pathMap[i]);
