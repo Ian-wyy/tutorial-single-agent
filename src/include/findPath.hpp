@@ -20,6 +20,7 @@ public:
   void getMap();
   double getPath(Point start, Point end);
   bool isInPt(Node* child);
+  void test(int LIMIT); //the function to test the function of this class
 
   gridmap grid;
   scenario_manager scen;

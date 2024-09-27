@@ -6,6 +6,7 @@
 #include <math.h>
 #include <string.h>
 #include <vector>
+#include <chrono>
 
 using namespace std;
 using namespace movingai;
@@ -16,7 +17,7 @@ using namespace movingai;
 #define TIME_SLIDE 1.414
 
 #define DEBUG 0
-#define TIME_STEP 0
+#define TIME_STEP 1
 
 void findPath::getMap() {
   for (int i = 0; i < grid.height_; i++) {
@@ -33,6 +34,7 @@ Node *createTreeNode(int x, int y, int time = 0) {
   pNew->pos.x = x;
   pNew->pos.y = y;
   pNew->time = time;
+  pNew->parent = nullptr;
   return pNew;
 }
 
@@ -76,9 +78,12 @@ bool isInList(vector<Node *> &buff, Node *child) {
 }
 
 void findPath::inputTimeStep(Node *current, Node *root) {
+  map[current->pos.y][current->pos.x] = 1;
   while (current != root) {
     PPT p(current->pos.x, current->pos.y, current->time);
+    PPT pp(current->parent->pos.x, current->parent->pos.y, current->time);
     pt.push_back(p);
+    pt.push_back(pp);
     current = current->parent;
   }
 }
@@ -246,5 +251,45 @@ double findPath::getPath(Point start, Point end) {
     }
     free(pathMap);
     return -1;
+  }
+}
+
+void findPath::test(int LIMIT){
+  auto tstart =
+      std::chrono::steady_clock::now(); // limit the time of the pathFinding
+
+  int flag = 1;
+  int count = 0;
+
+  for (int i = 0; i < scen.num_experiments(); i++) {
+    auto expr = scen.get_experiment(i);
+    Point start = {(int)expr->startx(), (int)expr->starty()};
+    Point end = {(int)expr->goalx(), (int)expr->goaly()};
+    int distance = getPath(start, end);
+    if (abs(distance - expr->distance()) < LIMIT) {
+      count++; // see how many path can be find in the time limit
+      continue;
+    } else {
+      flag = 0;
+      cout << "the path that longer than the answer over " << LIMIT << ":"
+           << endl;
+      cout << start.x << ", " << start.y << endl;
+      cout << end.x << ", " << end.y << endl;
+      cout << "testA: " << distance << " answer: " << expr->distance() << endl
+           << endl;
+    }
+    auto tnow = std::chrono::steady_clock::now();
+    double t = std::chrono::duration<double>(tnow - tstart).count();
+    if (t > 5) {
+      cout << "time is end" << endl;
+      cout << "you have successfully find " << count << "path in " << t
+           << " seconds" << endl;
+      break;
+    }
+  }
+  if (flag) {
+    cout << "OK" << endl;
+  } else {
+    cout << "ERROR" << endl;
   }
 }
