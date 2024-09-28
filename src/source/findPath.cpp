@@ -1,12 +1,12 @@
 #include "findPath.hpp"
 #include "gridmap.hpp"
 
+#include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <math.h>
 #include <string.h>
 #include <vector>
-#include <chrono>
 
 using namespace std;
 using namespace movingai;
@@ -77,20 +77,33 @@ bool isInList(vector<Node *> &buff, Node *child) {
   return false;
 }
 
-void findPath::inputTimeStep(Node *current, Node *root) {
-  map[current->pos.y][current->pos.x] = 1;
+void findPath::inputTimeStep(Node *current,
+                             Node *root) { // also log whole routes
+  map[current->pos.y][current->pos.x] =
+      1; // The agent will stay at the end point
+  vector<PPT> new_route;
   while (current != root) {
-    PPT p(current->pos.x, current->pos.y, current->time);
-    PPT pp(current->parent->pos.x, current->parent->pos.y, current->time);
-    pt.push_back(p);
-    pt.push_back(pp);
+      PPT p(current->pos.x, current->pos.y, current->time);
+      PPT pp(current->pos.x, current->pos.y, current->parent->time);
+      pt.push_back(p);
+      pt.push_back(pp);
+      //we need to log the specific routes
+      new_route.insert(new_route.begin(),p);
     current = current->parent;
   }
+  PPT p(root->pos.x, root->pos.y, root->time);
+  pt.push_back(p);
+  new_route.insert(new_route.begin(), p);
+  // put the route in class
+  val.addRoute(new_route);
 }
 
-bool findPath::isInPt(Node *child) {
+bool findPath::isInPt(Node *child,Node* current) {
   for (auto p : pt) {
     if (p.x == child->pos.x && p.y == child->pos.y && p.time == child->time) {
+      return true;
+    }
+    if (p.x == child->pos.x && p.y == child->pos.y && p.time == current->time) {
       return true;
     }
   }
@@ -98,8 +111,6 @@ bool findPath::isInPt(Node *child) {
 }
 
 double findPath::getPath(Point start, Point end) {
-  // bool pathMap[grid.height_][grid.width_] = {0};
-
   // As we can't use VLA, we need to malloc area for the path_map
   int **pathMap = (int **)malloc(sizeof(int *) * grid.height_);
   for (int i = 0; i < grid.height_; i++) {
@@ -194,7 +205,7 @@ double findPath::getPath(Point start, Point end) {
           map[current->pos.y][child->pos.x] == 0) {
         child->pos.H = getH(child->pos, end);
         child->pos.F = child->pos.H + child->pos.G;
-        if (isInPt(child)) {
+        if (isInPt(child,current)) {
           delete child;
           continue;
         } else if (isInList(buff, child)) {
@@ -254,7 +265,7 @@ double findPath::getPath(Point start, Point end) {
   }
 }
 
-void findPath::test(int LIMIT){
+void findPath::test_Astar(int LIMIT) {
   auto tstart =
       std::chrono::steady_clock::now(); // limit the time of the pathFinding
 
@@ -291,5 +302,41 @@ void findPath::test(int LIMIT){
     cout << "OK" << endl;
   } else {
     cout << "ERROR" << endl;
+  }
+}
+
+void findPath::test_Validate(int LIMIT){
+    auto tstart =
+      std::chrono::steady_clock::now(); // limit the time of the pathFinding
+
+  int flag = 1;
+  //int count = 0;
+
+  for (int i = 0; i < scen.num_experiments(); i++) {
+    auto expr = scen.get_experiment(i);
+    Point start = {(int)expr->startx(), (int)expr->starty()};
+    Point end = {(int)expr->goalx(), (int)expr->goaly()};
+    int distance = getPath(start, end);
+    if (abs(distance - expr->distance()) < LIMIT) {
+      //count++; // see how many path can be find in the time limit
+      continue;
+    } else {
+      flag = 0;
+      cout << "the path that longer than the answer over " << LIMIT << ":"
+           << endl;
+      cout << start.x << ", " << start.y << endl;
+      cout << end.x << ", " << end.y << endl;
+      cout << "testA: " << distance << " answer: " << expr->distance() << endl
+           << endl;
+    }
+  }
+  if (flag) {
+    cout << "OK" << endl;
+  } else {
+    cout << "ERROR" << endl;
+  }
+
+  if (val.isValid()) {
+    cout<< "Valid path!"<<endl;
   }
 }

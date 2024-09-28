@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-#define SELECT_N 40
+#define SELECT_N 20
 #define LIMIT 2
 #define RAND_SELECT 1
 
@@ -18,7 +18,7 @@ void test_scen_io(std::string filename1, std::string filename2) {
   }
 
   findPath testA(filename1, filename2);
-  testA.test(LIMIT);
+  testA.test_Validate(LIMIT);
 }
 
 int main(int argc, char **argv) {

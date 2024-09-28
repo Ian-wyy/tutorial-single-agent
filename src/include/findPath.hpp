@@ -2,6 +2,7 @@
 
 #include "gridmap.hpp"
 #include "load_scens.hpp"
+#include "validator.hpp"
 #include <stdlib.h>
 #include <string>
 #include <vector>
@@ -19,15 +20,18 @@ public:
   }
   void getMap();
   double getPath(Point start, Point end);
-  bool isInPt(Node* child);
-  void test(int LIMIT); //the function to test the function of this class
+  bool isInPt(Node* child, Node* current);
+  void test_Astar(int LIMIT); //the function to test the function of this class
+  void test_Validate(int LIMIT);
 
   gridmap grid;
   scenario_manager scen;
   vector<vector<int>> map;
 
   // The part for time dimension
-  vector<PPT> pt;
+  vector<PPT> pt; //Check when finding the path
+  //vector<vector<PPT>> routes; // The path of all agents
   int time;
   void inputTimeStep(Node* current, Node* root);
+  validator val;
 };

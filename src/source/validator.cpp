@@ -1,14 +1,15 @@
 #include "validator.hpp"
 #include <cmath>
+#include <iostream>
 #include <vector>
 using namespace std;
 using namespace movingai;
 
-void Validator::addRoute(vector<PPT> new_Rought) {
+void validator::addRoute(vector<PPT> new_Rought) {
   routes.push_back(new_Rought);
 }
 
-bool Validator::ifCoflict(vector<PPT> r1, vector<PPT> r2) {
+bool validator::ifCoflict(vector<PPT> r1, vector<PPT> r2) {
   int l1 = r1.size();
   int l2 = r2.size();
   bool isCoflict = false;
@@ -25,6 +26,10 @@ bool Validator::ifCoflict(vector<PPT> r1, vector<PPT> r2) {
     }
     //The model of collision we need to implement, now  is easy
     if ((p11.x == p22.x && p11.y == p22.y)) {
+      cout<<"Point 1: x:"<<p11.x<<" y:"<<p11.y<<" time: "<<p11.time<<endl;
+      cout<<"Point 2: x:"<<p21.x<<" y:"<<p21.y<<" time: "<<p21.time<<endl;
+      cout<<"Point 1: x:"<<p12.x<<" y:"<<p12.y<<" time: "<<p12.time<<endl;
+      cout<<"Point 2: x:"<<p22.x<<" y:"<<p22.y<<" time: "<<p22.time<<endl;
         isCoflict = true;
         break;
     }
@@ -37,7 +42,7 @@ bool Validator::ifCoflict(vector<PPT> r1, vector<PPT> r2) {
   return isCoflict;
 }
 
-bool Validator::isValid(){
+bool validator::isValid(){
     for(int i = 0, I = routes.size(); i< I - 1; i++){
         for (int j = i + 1; j < I; j++) {
             if (ifCoflict(routes[i], routes[j])) {
