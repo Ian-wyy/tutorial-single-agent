@@ -26,6 +26,7 @@ bool validator::ifCoflict(vector<PPT> r1, vector<PPT> r2) {
     }
     //The model of collision we need to implement, now  is easy
     if ((p11.x == p22.x && p11.y == p22.y)) {
+      //used to test when existing conflict
       cout<<"Point 1: x:"<<p11.x<<" y:"<<p11.y<<" time: "<<p11.time<<endl;
       cout<<"Point 2: x:"<<p21.x<<" y:"<<p21.y<<" time: "<<p21.time<<endl;
       cout<<"Point 1: x:"<<p12.x<<" y:"<<p12.y<<" time: "<<p12.time<<endl;
