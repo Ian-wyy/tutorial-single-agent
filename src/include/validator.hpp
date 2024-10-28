@@ -1,15 +1,14 @@
 #pragma once
 
-#include "findPath.hpp"
 #include "gridmap.hpp"
 #include "load_scens.hpp"
 #include <vector>
 using namespace movingai;
 using namespace std;
 
-class Validator {
+class validator {
 public:
-  Validator() {}
+  validator() {}
   void addRoute(vector<PPT>);
   bool ifCoflict(vector<PPT> r1,
                  vector<PPT> r2); // Input two ordered (pos,time) series

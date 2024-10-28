@@ -18,6 +18,7 @@ using namespace movingai;
 
 #define DEBUG 0
 #define TIME_STEP 1
+#define CHECK 1
 
 void findPath::getMap() {
   for (int i = 0; i < grid.height_; i++) {
@@ -77,15 +78,35 @@ bool isInList(vector<Node *> &buff, Node *child) {
   return false;
 }
 
-void findPath::inputTimeStep(Node *current, Node *root) {
+void findPath::inputTimeStep_PT(Node *current, Node *root) {
   map[current->pos.y][current->pos.x] = 1;
   while (current != root) {
     PPT p(current->pos.x, current->pos.y, current->time);
-    PPT pp(current->parent->pos.x, current->parent->pos.y, current->time);
+    PPT pp(current->pos.x, current->pos.y, current->parent->time);
     pt.push_back(p);
     pt.push_back(pp);
     current = current->parent;
   }
+  PPT r(root->pos.x, root->pos.y, root->time);
+  pt.push_back(r);
+}
+
+void findPath::inputTimeStep_VA(Node *current, Node *root) {
+  vector<PPT> route_reverse, route;
+  while (current != root) {
+    PPT p(current->pos.x, current->pos.y, current->time);
+    //PPT pp(current->parent->pos.x, current->parent->pos.y, current->time);
+    current = current->parent;
+    route_reverse.push_back(p);
+  }
+  PPT r(root->pos.x, root->pos.y, root->time);
+  route_reverse.push_back(r);
+  while(!route_reverse.empty()) {
+    PPT p = route_reverse.back();
+    route_reverse.pop_back();
+    route.push_back(p);
+  }
+  va.addRoute(route);
 }
 
 bool findPath::isInPt(Node *child) {
@@ -235,9 +256,13 @@ double findPath::getPath(Point start, Point end) {
   if (isFindEnd) {
     double length = current->pos.G;
     if (TIME_STEP) {
-      inputTimeStep(current, root);
+      inputTimeStep_PT(current, root);   
     } // If we find a path, then simulating the
       // agent moving on the path
+    if (CHECK){
+      inputTimeStep_VA(current, root);
+    } // If we need to store the route and check if they are valid
+      // Then we need to use the validator
     freeNode(root);
     for (int i = 0; i < grid.height_; i++) {
       free(pathMap[i]);
@@ -254,7 +279,7 @@ double findPath::getPath(Point start, Point end) {
   }
 }
 
-void findPath::test(int LIMIT){
+void findPath::test(int LIMIT, int CHECK_VALID){
   auto tstart =
       std::chrono::steady_clock::now(); // limit the time of the pathFinding
 
@@ -280,7 +305,7 @@ void findPath::test(int LIMIT){
     }
     auto tnow = std::chrono::steady_clock::now();
     double t = std::chrono::duration<double>(tnow - tstart).count();
-    if (t > 5) {
+    if (t > 100) {
       cout << "time is end" << endl;
       cout << "you have successfully find " << count << "path in " << t
            << " seconds" << endl;
@@ -290,6 +315,15 @@ void findPath::test(int LIMIT){
   if (flag) {
     cout << "OK" << endl;
   } else {
-    cout << "ERROR" << endl;
+    cout << "ERROR, we get " << count << " routes." << endl;
+  }
+
+  if (CHECK_VALID) {
+    if (va.isValid()) {
+     cout<<"Valid"<<endl;
+    }
+    else {
+    cout<<"Not Valid"<<endl;
+    }
   }
 }
