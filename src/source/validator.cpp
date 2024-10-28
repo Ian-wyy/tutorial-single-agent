@@ -16,6 +16,7 @@ bool validator::ifCoflict(vector<PPT> r1, vector<PPT> r2) {
   for (int i = 0; i < min(l1, l2) - 1; i++) {
     PPT p11 = r1[i], p12 = r1[i + 1];
     PPT p21 = r2[i], p22 = r2[i + 1];
+
     if ((p11.x - p21.x) * (p11.x - p21.x) + (p11.y - p21.y) * (p11.y - p21.y) >
         2)
       continue;

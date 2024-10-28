@@ -8,6 +8,7 @@
 #define SELECT_N 50
 #define LIMIT 5
 #define RAND_SELECT 1
+#define CHECK_VALID 1
 
 void test_scen_io(std::string filename1, std::string filename2) {
 

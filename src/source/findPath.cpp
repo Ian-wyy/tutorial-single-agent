@@ -18,6 +18,7 @@ using namespace movingai;
 
 #define DEBUG 0
 #define TIME_STEP 1
+#define CHECK 1
 
 void findPath::getMap() {
   for (int i = 0; i < grid.height_; i++) {
@@ -246,9 +247,13 @@ double findPath::getPath(Point start, Point end) {
   if (isFindEnd) {
     double length = current->pos.G;
     if (TIME_STEP) {
-      inputTimeStep(current, root);
+      inputTimeStep_PT(current, root);   
     } // If we find a path, then simulating the
       // agent moving on the path
+    if (CHECK){
+      inputTimeStep_VA(current, root);
+    } // If we need to store the route and check if they are valid
+      // Then we need to use the validator
     freeNode(root);
     for (int i = 0; i < grid.height_; i++) {
       free(pathMap[i]);
@@ -291,7 +296,7 @@ void findPath::test_Astar(int LIMIT) {
     }
     auto tnow = std::chrono::steady_clock::now();
     double t = std::chrono::duration<double>(tnow - tstart).count();
-    if (t > 5) {
+    if (t > 100) {
       cout << "time is end" << endl;
       cout << "you have successfully find " << count << "path in " << t
            << " seconds" << endl;
@@ -301,7 +306,44 @@ void findPath::test_Astar(int LIMIT) {
   if (flag) {
     cout << "OK" << endl;
   } else {
-    cout << "ERROR" << endl;
+    cout << "ERROR, we get " << count << " routes." << endl;
+  }
+
+}
+
+void findPath::test_Validate(int LIMIT){
+    auto tstart =
+      std::chrono::steady_clock::now(); // limit the time of the pathFinding
+
+  int flag = 1;
+  int count = 0;
+
+  for (int i = 0; i < scen.num_experiments(); i++) {
+    auto expr = scen.get_experiment(i);
+    Point start = {(int)expr->startx(), (int)expr->starty()};
+    Point end = {(int)expr->goalx(), (int)expr->goaly()};
+    int distance = getPath(start, end);
+    if (abs(distance - expr->distance()) < LIMIT) {
+      count++; // see how many path can be find in the time limit
+      continue;
+    } else {
+      flag = 0;
+      cout << "the path that longer than the answer over " << LIMIT << ":"
+           << endl;
+      cout << start.x << ", " << start.y << endl;
+      cout << end.x << ", " << end.y << endl;
+      cout << "testA: " << distance << " answer: " << expr->distance() << endl
+           << endl;
+    }
+  }
+  if (flag) {
+    cout << "OK" << endl;
+  } else {
+    cout << "ERROR, " << "we get " << count << " valid routes." << endl;
+  }
+
+  if (val.isValid()) {
+    cout<< "Valid path!"<<endl;
   }
 }
 

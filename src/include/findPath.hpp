@@ -3,6 +3,7 @@
 #include "gridmap.hpp"
 #include "load_scens.hpp"
 #include "validator.hpp"
+#include "validator.hpp"
 #include <stdlib.h>
 #include <string>
 #include <vector>
