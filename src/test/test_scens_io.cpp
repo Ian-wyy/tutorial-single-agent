@@ -5,8 +5,8 @@
 #include <iostream>
 #include <string>
 
-#define SELECT_N 20
-#define LIMIT 1
+#define SELECT_N 50
+#define LIMIT 5
 #define RAND_SELECT 1
 
 void test_scen_io(std::string filename1, std::string filename2) {

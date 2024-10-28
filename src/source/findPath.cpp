@@ -310,7 +310,7 @@ void findPath::test_Validate(int LIMIT){
       std::chrono::steady_clock::now(); // limit the time of the pathFinding
 
   int flag = 1;
-  //int count = 0;
+  int count = 0;
 
   for (int i = 0; i < scen.num_experiments(); i++) {
     auto expr = scen.get_experiment(i);
@@ -318,7 +318,7 @@ void findPath::test_Validate(int LIMIT){
     Point end = {(int)expr->goalx(), (int)expr->goaly()};
     int distance = getPath(start, end);
     if (abs(distance - expr->distance()) < LIMIT) {
-      //count++; // see how many path can be find in the time limit
+      count++; // see how many path can be find in the time limit
       continue;
     } else {
       flag = 0;
@@ -333,7 +333,7 @@ void findPath::test_Validate(int LIMIT){
   if (flag) {
     cout << "OK" << endl;
   } else {
-    cout << "ERROR" << endl;
+    cout << "ERROR, " << "we get " << count << " valid routes." << endl;
   }
 
   if (val.isValid()) {
