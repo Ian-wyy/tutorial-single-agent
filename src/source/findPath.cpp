@@ -13,12 +13,16 @@ using namespace movingai;
 
 #define LINE 1
 #define SLIDE 1.414
+#define WAIT 1
 #define TIME_LINE 1
 #define TIME_SLIDE 1.414
+#define TIME_WAIT 1
 
 #define DEBUG 0
 #define TIME_STEP 1
 #define CHECK 1
+
+#define CHANCE 3 // TODO: chance to wait
 
 void findPath::getMap() {
   for (int i = 0; i < grid.height_; i++) {
@@ -84,12 +88,12 @@ void findPath::inputTimeStep(Node *current,
       1; // The agent will stay at the end point
   vector<PPT> new_route;
   while (current != root) {
-      PPT p(current->pos.x, current->pos.y, current->time);
-      PPT pp(current->pos.x, current->pos.y, current->parent->time);
-      pt.push_back(p);
-      pt.push_back(pp);
-      //we need to log the specific routes
-      new_route.insert(new_route.begin(),p);
+    PPT p(current->pos.x, current->pos.y, current->time);
+    PPT pp(current->pos.x, current->pos.y, current->parent->time);
+    pt.push_back(p);
+    pt.push_back(pp);
+    // we need to log the specific routes
+    new_route.insert(new_route.begin(), p);
     current = current->parent;
   }
   PPT p(root->pos.x, root->pos.y, root->time);
@@ -99,7 +103,7 @@ void findPath::inputTimeStep(Node *current,
   val.addRoute(new_route);
 }
 
-bool findPath::isInPt(Node *child,Node* current) {
+bool findPath::isInPt(Node *child, Node *current) {
   for (auto p : pt) {
     if (p.x == child->pos.x && p.y == child->pos.y && p.time == child->time) {
       return true;
@@ -140,16 +144,15 @@ double findPath::getPath(Point start, Point end) {
   }
   bool isFindEnd = true;
 
-  // time = 0; // each time finding a new object, time get 0 again
+  int chance = 0; // TODO: chance to wait when the agent can't move
 
   while (1) {
-    // time++; // every search step, time ++
     if (DEBUG) {
       cout << "DEBUG: "
            << "x: " << current->pos.x << ", y: " << current->pos.y << endl;
     }
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
       Node *child = createTreeNode(current->pos.x, current->pos.y);
       switch (i) {
       case p_up:
@@ -196,17 +199,21 @@ double findPath::getPath(Point start, Point end) {
         child->time = current->time + TIME_SLIDE;
         child->pos.G = current->pos.G + SLIDE;
         break;
+      case p_wait: // TODO: wait action, now no use here
+        child->time = current->time + TIME_WAIT;
+        child->pos.G = current->pos.G + WAIT;
+        break;
       }
 
       if (child->pos.x >= 0 && child->pos.y >= 0 &&
           child->pos.x < grid.width_ && child->pos.y < grid.height_ &&
-          pathMap[child->pos.y][child->pos.x] == 0 &&
+          //pathMap[child->pos.y][child->pos.x] == 0 && // TODO: can we remove it?
           map[child->pos.y][child->pos.x] == 0 &&
           map[child->pos.y][current->pos.x] == 0 &&
           map[current->pos.y][child->pos.x] == 0) {
         child->pos.H = getH(child->pos, end);
         child->pos.F = child->pos.H + child->pos.G;
-        if (isInPt(child,current)) {
+        if (isInPt(child, current)) {
           delete child;
           continue;
         } else if (isInList(buff, child)) {
@@ -222,10 +229,22 @@ double findPath::getPath(Point start, Point end) {
       }
     }
 
-    if (buff.size() == 0) { // If the point can't move at all and no point in
-                            // opnelist list now, then break
-      isFindEnd = false;
-      break;
+    if (buff.size() == 0) {  // If the point can't move at all and no point in
+                             // opnelist list now, then break
+      if (chance < CHANCE) { // TODO: chance given to the agent
+        Node *child = createTreeNode(current->pos.x, current->pos.y);
+        child->time = current->time + TIME_WAIT;
+        child->pos.G = current->pos.G + WAIT;
+        child->pos.H = getH(child->pos, end);
+        child->pos.F = child->pos.H + child->pos.G;
+        current->child.push_back(child);
+        child->parent = current;
+        buff.push_back(child);
+        chance ++; //update the chance
+      } else {
+        isFindEnd = false;
+        break;
+      }
     }
 
     it = buff.begin();
@@ -236,7 +255,7 @@ double findPath::getPath(Point start, Point end) {
     }
 
     current = *itMin;
-    pathMap[current->pos.y][current->pos.x] = 1;
+    //pathMap[current->pos.y][current->pos.x] = 1;//TODO: become map
     buff.erase(itMin);
 
     if (end.x == current->pos.x && end.y == current->pos.y) {
@@ -247,13 +266,9 @@ double findPath::getPath(Point start, Point end) {
   if (isFindEnd) {
     double length = current->pos.G;
     if (TIME_STEP) {
-      inputTimeStep_PT(current, root);   
+      inputTimeStep(current, root);
     } // If we find a path, then simulating the
       // agent moving on the path
-    if (CHECK){
-      inputTimeStep_VA(current, root);
-    } // If we need to store the route and check if they are valid
-      // Then we need to use the validator
     freeNode(root);
     for (int i = 0; i < grid.height_; i++) {
       free(pathMap[i]);
@@ -308,11 +323,10 @@ void findPath::test_Astar(int LIMIT) {
   } else {
     cout << "ERROR, we get " << count << " routes." << endl;
   }
-
 }
 
-void findPath::test_Validate(int LIMIT){
-    auto tstart =
+void findPath::test_Validate(int LIMIT) {
+  auto tstart =
       std::chrono::steady_clock::now(); // limit the time of the pathFinding
 
   int flag = 1;
@@ -339,46 +353,11 @@ void findPath::test_Validate(int LIMIT){
   if (flag) {
     cout << "OK" << endl;
   } else {
-    cout << "ERROR, " << "we get " << count << " valid routes." << endl;
+    cout << "ERROR, "
+         << "we get " << count << " valid routes." << endl;
   }
 
   if (val.isValid()) {
-    cout<< "Valid path!"<<endl;
-  }
-}
-
-void findPath::test_Validate(int LIMIT){
-    auto tstart =
-      std::chrono::steady_clock::now(); // limit the time of the pathFinding
-
-  int flag = 1;
-  int count = 0;
-
-  for (int i = 0; i < scen.num_experiments(); i++) {
-    auto expr = scen.get_experiment(i);
-    Point start = {(int)expr->startx(), (int)expr->starty()};
-    Point end = {(int)expr->goalx(), (int)expr->goaly()};
-    int distance = getPath(start, end);
-    if (abs(distance - expr->distance()) < LIMIT) {
-      count++; // see how many path can be find in the time limit
-      continue;
-    } else {
-      flag = 0;
-      cout << "the path that longer than the answer over " << LIMIT << ":"
-           << endl;
-      cout << start.x << ", " << start.y << endl;
-      cout << end.x << ", " << end.y << endl;
-      cout << "testA: " << distance << " answer: " << expr->distance() << endl
-           << endl;
-    }
-  }
-  if (flag) {
-    cout << "OK" << endl;
-  } else {
-    cout << "ERROR, " << "we get " << count << " valid routes." << endl;
-  }
-
-  if (val.isValid()) {
-    cout<< "Valid path!"<<endl;
+    cout << "Valid path!" << endl;
   }
 }

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-#define SELECT_N 50
+#define SELECT_N 20
 #define LIMIT 5
 #define RAND_SELECT 1
 #define CHECK_VALID 1
